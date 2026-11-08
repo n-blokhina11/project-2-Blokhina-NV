@@ -8,9 +8,10 @@ def load_metadata(filepath):
 
     try:
         with open(filepath, "r", encoding="utf-8") as file:
-            return json.load(file)
+            data = json.load(file)
     except FileNotFoundError:
         return {}
+    return data if isinstance(data, dict) else {}
 
 
 def save_metadata(filepath, data):

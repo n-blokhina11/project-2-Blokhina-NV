@@ -1,3 +1,4 @@
+import os
 import re
 import shlex
 
@@ -162,9 +163,8 @@ def run():
             values = parse_insert_values(raw_values)
             table_data = load_table_data(table_name)
 
-            new_data, error = insert(metadata, table_name, values, table_data)
-            if error:
-                print(f"{error} Попробуйте снова.")
+            new_data = insert(metadata, table_name, values, table_data)
+            if new_data is None:
                 continue
 
             save_table_data(table_name, new_data)
@@ -203,9 +203,8 @@ def run():
                 continue
 
             metadata = load_metadata(METADATA)
-            metadata, error = create_table(metadata, table_name, columns)
-            if error:
-                print(f"{error}. Попробуйте снова.")
+            metadata = create_table(metadata, table_name, columns)
+            if metadata is None:
                 continue
 
             save_metadata(METADATA, metadata)
@@ -221,13 +220,15 @@ def run():
                 continue
 
             metadata = load_metadata(METADATA)
-            metadata, error = drop_table(metadata, rest[0])
-
-            if error:
-                print(f"{error}. Попробуйте снова.")
+            metadata = drop_table(metadata, rest[0])
+            if metadata is None:
                 continue
 
             save_metadata(METADATA, metadata)
+            data_file = os.path.join("data", f"{rest[0]}.json")
+            if os.path.exists(data_file):
+                os.remove(data_file)
+
             print(f"Таблица {rest[0]} успешно удалена.")
             continue
 
@@ -268,6 +269,9 @@ def run():
 
             table_data = load_table_data(table_name)
             result = select(table_data, where_clause)
+            if result is None:
+                continue
+
             print_table(result, columns)
             continue
 
@@ -306,6 +310,8 @@ def run():
 
             table_data = load_table_data(table_name)
             new_data, affected = update(table_data, set_clause, where_clause)
+            if new_data is None:
+                continue
             if not affected:
                 print("Нет записей для обновления.")
                 continue
@@ -336,13 +342,21 @@ def run():
                 continue
 
             table_data = load_table_data(table_name)
-            new_data, deleted = delete(table_data, where_clause)
-            if not deleted:
+            deleted_ids = [
+                row["ID"]
+                for row in table_data
+                if all(row.get(k) == v for k, v in where_clause.items())
+                ]
+            new_data = delete(table_data, where_clause)
+            if new_data is None:
+                continue
+
+            if not deleted_ids:
                 print("Нет записей для удаления.")
                 continue
 
             save_table_data(table_name, new_data)
-            for rid in deleted:
+            for rid in deleted_ids:
                 print(f'Запись с ID={rid} успешно удалена из таблицы "{table_name}".')
             continue
 
