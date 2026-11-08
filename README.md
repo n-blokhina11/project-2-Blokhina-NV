@@ -82,5 +82,5 @@ database
 
 ### Демонстрация
 
-[asciicast](https://asciinema.org/a/QlEfizGJfNSR8YN2)
+[![asciicast](https://asciinema.org/a/QlEfizGJfNSR8YN2)](https://asciinema.org/a/QlEfizGJfNSR8YN2)
 ```
